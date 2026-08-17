@@ -261,11 +261,40 @@ let
     }
   '';
 
+  fidgetLua = ''
+    -- LSP progress in the bottom-right corner. Added chiefly so cargo
+    -- clippy's flycheck runs are VISIBLE: without it, :w kicks off a check
+    -- that can take seconds (minutes on a cold target/) with zero feedback,
+    -- which reads as "compile errors never show up". When the spinner
+    -- finishes, the diagnostics are in.
+    require('fidget').setup({})
+  '';
+
   floatermLua = ''
     -- FloaTerm configuration
     vim.keymap.set('n', "<leader>ft", ":FloatermNew --name=myfloat --height=0.8 --width=0.7 --autoclose=2 fish <CR> ", {})
     vim.keymap.set('n', "t", ":FloatermToggle myfloat<CR>", {})
-    vim.keymap.set('t', "<Esc>", "<C-\\><C-n>:q<CR>", {})
+
+    -- Esc hides the floating terminal.
+    --
+    -- The upstream mapping was the typed-key chain <C-\><C-n>:q<CR>. That
+    -- replays keystrokes, and under which-key's terminal-mode hook the
+    -- mode-switch half ran but the ':q<CR>' tail was eaten — the float lost
+    -- focus (dimmed) yet stayed on screen. <Cmd> executes the command
+    -- atomically inside the mapping: nothing is replayed, nothing can
+    -- intercept it.
+    --
+    -- Scoped to floaterm buffers (buffer-local, via FileType): in ordinary
+    -- :terminal windows Esc now reaches the running program (fzf, lazygit,
+    -- vimspector's console) instead of yanking the window away — the old
+    -- global :q closed those by accident.
+    vim.api.nvim_create_autocmd('FileType', {
+      pattern = 'floaterm',
+      callback = function(ev)
+        vim.keymap.set('t', '<Esc>', '<Cmd>FloatermHide<CR>',
+          { buffer = ev.buf, silent = true })
+      end,
+    })
   '';
 
   iblLua = ''
@@ -425,6 +454,20 @@ let
               command = "clippy",
               extraArgs = { "--all-targets" },
             },
+            -- Two diagnostic pipelines exist, and only ONE of them carries
+            -- real compile errors:
+            --   1. rust-analyzer's own analysis — live, as you type. Type
+            --      mismatches, unresolved names. Works even on a lone .rs
+            --      file with no Cargo.toml.
+            --   2. flycheck — the `check` command above. Borrow checker,
+            --      macro expansion, cross-file breakage: everything rustc
+            --      emits. Runs ONLY on :w, ONLY inside a Cargo project, and
+            --      the first run after a rebuild compiles every dependency
+            --      (minutes, silently — see fidget.lua, added to make that
+            --      visible). true is the default; explicit because "type
+            --      errors show inline but compile errors don't" is exactly
+            --      what it looks like when this never fires.
+            checkOnSave = true,
             -- Don't index build output or direnv caches.
             files = {
               excludeDirs = { ".direnv", ".git", "target" },
@@ -554,7 +597,12 @@ let
         end,
         show_help = true,
         triggers = {
-            { "<auto>", mode = "nixsotc" },
+            -- 't' (terminal mode) deliberately absent — was "nixsotc".
+            -- which-key hooking terminal mode intercepts replayed keys there,
+            -- which is what broke the floaterm Esc mapping (float dimmed but
+            -- never closed). A key-hint popup inside a terminal is useless
+            -- anyway: keys belong to the running program.
+            { "<auto>", mode = "nixsoc" },
         },
         spec = {},
     }
@@ -593,6 +641,7 @@ let
       (pkgs.writeTextDir "after/plugin/00-init.lua" initAfter)
       (pkgs.writeTextDir "after/plugin/cmp.lua" cmpLua)
       (pkgs.writeTextDir "after/plugin/devicons.lua" deviconsLua)
+      (pkgs.writeTextDir "after/plugin/fidget.lua" fidgetLua)
       (pkgs.writeTextDir "after/plugin/floaterm.lua" floatermLua)
       (pkgs.writeTextDir "after/plugin/ibl.lua" iblLua)
       (pkgs.writeTextDir "after/plugin/lsp.lua" lspLua)
@@ -664,6 +713,7 @@ in
           lualine-nvim
           nvim-web-devicons
           gruvbox-community
+          fidget-nvim           # LSP progress UI — makes clippy flycheck visible
 
           vim-gitgutter         # git diff signs
           vim-tmux-navigator    # <C-hjkl> across tmux panes
@@ -726,4 +776,11 @@ in
   # 7. lua/vars.lua was never required by init.lua (opts.lua supersedes it) —
   #    dropped. Note it set relativenumber = true, while opts.lua sets false;
   #    opts.lua wins, matching current behaviour.
+  # 8. Floaterm Esc mapping rewritten (<C-\><C-n>:q<CR> -> buffer-local
+  #    <Cmd>FloatermHide<CR>) and 't' dropped from which-key's auto triggers:
+  #    which-key hooking terminal mode ate the tail of the replayed keys, so
+  #    Esc unfocused the float without closing it.
+  # 9. fidget.nvim added (not in upstream): renders LSP progress so
+  #    rust-analyzer's cargo-clippy flycheck runs are visible instead of
+  #    silently pending.
 }
