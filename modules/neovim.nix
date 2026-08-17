@@ -67,6 +67,17 @@ let
     autocmd CursorHold * lua vim.diagnostic.open_float(nil, { focusable = false })
     ]])
 
+    -- Neovim 0.11 made the virtual_text diagnostic handler opt-in; without
+    -- this, errors show only as a gutter sign plus an underline and the
+    -- message appears solely in the CursorHold float. Restores the inline
+    -- end-of-line message the pre-0.11 setup had.
+    vim.diagnostic.config({
+      virtual_text = true,
+      underline = true,
+      signs = true,
+      severity_sort = true,   -- errors win over warnings on the same line
+    })
+
     -- Vimspector options
     vim.cmd([[
     let g:vimspector_sidebar_width = 85
@@ -408,20 +419,64 @@ let
             procMacro = {
               enable = true,
             },
+            -- Run clippy instead of plain `cargo check` on save: same latency,
+            -- strictly more lints. The clippy binary comes from modules/rust.nix.
+            check = {
+              command = "clippy",
+              extraArgs = { "--all-targets" },
+            },
+            -- Don't index build output or direnv caches.
+            files = {
+              excludeDirs = { ".direnv", ".git", "target" },
+            },
           },
         },
         on_attach = function(_, bufnr)
+          local bufopts = { buffer = bufnr, silent = true }
+
           -- Hover actions (was rt.hover_actions.hover_actions)
           vim.keymap.set("n", "<C-space>", function()
             vim.cmd.RustLsp({ 'hover', 'actions' })
-          end, { buffer = bufnr })
+          end, bufopts)
           -- Code action groups (was rt.code_action_group.code_action_group)
           vim.keymap.set("n", "<Leader>a", function()
             vim.cmd.RustLsp('codeAction')
-          end, { buffer = bufnr })
+          end, bufopts)
+
+          -- Rust-specific, all under <leader>r. <leader>rn stays LSP rename
+          -- (set globally in keys.lua) — not shadowed here.
+          vim.keymap.set("n", "<leader>rr", function()
+            vim.cmd.RustLsp('runnables')      -- pick a bin/test/example to run
+          end, bufopts)
+          vim.keymap.set("n", "<leader>rt", function()
+            vim.cmd.RustLsp('testables')      -- run the test under the cursor
+          end, bufopts)
+          vim.keymap.set("n", "<leader>rm", function()
+            vim.cmd.RustLsp('expandMacro')    -- expand macro recursively
+          end, bufopts)
+          vim.keymap.set("n", "<leader>rc", function()
+            vim.cmd.RustLsp('openCargo')      -- jump to Cargo.toml
+          end, bufopts)
+          vim.keymap.set("n", "<leader>rp", function()
+            vim.cmd.RustLsp('parentModule')
+          end, bufopts)
+
+          -- Inlay hints (types, parameter names) off by default, toggled —
+          -- always-on hints shift text around while you type.
+          vim.keymap.set("n", "<leader>rh", function()
+            vim.lsp.inlay_hint.enable(
+              not vim.lsp.inlay_hint.is_enabled({ bufnr = bufnr }),
+              { bufnr = bufnr }
+            )
+          end, bufopts)
         end,
       },
     }
+
+    -- Cargo.toml / *.toml: taplo LSP (schema-aware completion for crate
+    -- fields, plus formatting). nvim-lspconfig ships the defaults; the binary
+    -- comes from modules/rust.nix, so enabling it is all that's needed.
+    vim.lsp.enable('taplo')
   '';
 
   themeLua = ''
@@ -575,7 +630,7 @@ in
           # module (and incremental_selection with it). plug.lua and
           # treesitter.lua both use configs.setup, so the classic plugin is the
           # one that matches this config. Same grammar API.
-          (nvim-treesitter-legacy.withPlugins (p: [ p.rust p.lua p.python ]))
+          (nvim-treesitter-legacy.withPlugins (p: [ p.rust p.lua p.python p.toml ]))
 
           vim-fugitive
           undotree

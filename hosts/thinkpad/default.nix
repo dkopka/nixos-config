@@ -15,6 +15,7 @@
     ../../modules/docker.nix
     ../../modules/services.nix
     ../../modules/neovim.nix
+    ../../modules/rust.nix
   ];
 
   # Nix store hygiene — per DEPLOYMENT.md "Ongoing Nix Store Hygiene"
