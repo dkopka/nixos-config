@@ -25,14 +25,28 @@ in
   boot.initrd.availableKernelModules = [ "e1000e" ];
 
   # NixOS 26.05 boots stage 1 with systemd by default, so early networking
-  # is systemd-networkd, not the legacy ip= kernel parameter. DHCP on any
-  # wired interface; pin a lease to the MAC on the router for a stable
-  # address at the passphrase prompt.
+  # is systemd-networkd, not the legacy ip= kernel parameter.
+  #
+  # ClientIdentifier=mac is essential: networkd's default is a DUID derived
+  # from /etc/machine-id, but the real machine-id sits on the still-locked
+  # LUKS root, so stage 1 gets a RANDOM transient one every boot -> new DUID
+  # -> the DHCP server hands out a different IP on every reboot. Keying the
+  # lease to the MAC makes it stable and lets a router-side DHCP reservation
+  # apply to both stage 1 and the booted system (NetworkManager also keys by
+  # MAC — see modules/networking.nix).
   boot.initrd.systemd.network = {
     enable = true;
     networks."10-lan" = {
       matchConfig.Name = "en*";
       networkConfig.DHCP = "ipv4";
+      dhcpV4Config = {
+        ClientIdentifier = "mac";
+        # DHCP option 12. Routers that register leases in local DNS
+        # (dnsmasq-based: OpenWrt, Pi-hole, many ISP boxes) will resolve
+        # thinkpad-initrd.lan -> unlock prompt, distinct from "thinkpad"
+        # which stage 2 registers.
+        Hostname = "thinkpad-initrd";
+      };
       linkConfig.RequiredForOnline = "routable";
     };
   };
