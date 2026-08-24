@@ -15,7 +15,7 @@
 {
   name = "thinkpad-boot";
 
-  nodes.machine = { ... }: {
+  nodes.machine = {
     imports = [
       ../hosts/thinkpad/common.nix
       ./fixtures/ci-overrides.nix
