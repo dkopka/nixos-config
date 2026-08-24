@@ -23,6 +23,10 @@ modules/
   users.nix                 dkopka, groups, declared packages
   docker.nix                docker with data-root=/var/docker + weekly prune
   services.nix              chrony, lid behaviour, fstrim
+  hyprland.nix              desktop: greetd/tuigreet login, Hyprland (UWSM session),
+                            pipewire, bluetooth, waybar/mako/fuzzel, hyprlock/hypridle —
+                            all dotfiles declarative in /etc (pick "Hyprland (UWSM)"
+                            in the greeter; config changes need `hyprctl reload`)
   neovim.nix                declarative neovim scaffold
 private/                    ← gitignored, machine identity
   luks.nix                  LUKS UUID (08de1afa-…) — real value, already filled in

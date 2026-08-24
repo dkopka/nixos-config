@@ -13,6 +13,7 @@
     ../../modules/users.nix
     ../../modules/docker.nix
     ../../modules/services.nix
+    ../../modules/hyprland.nix
     ../../modules/neovim.nix
     ../../modules/rust.nix
   ];

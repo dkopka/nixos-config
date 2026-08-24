@@ -76,6 +76,24 @@
         # Translating hashedPassword into /etc/shadow is nixpkgs's contract,
         # verified by nixpkgs's own test suite — not something to re-test here.
 
+    with subtest("graphical stack: greetd greeter + Hyprland UWSM session"):
+        # greetd owns tty1 (the test driver talks over the backdoor console,
+        # so the greeter running there is invisible to and safe for the test)
+        machine.wait_for_unit("greetd.service")
+        # the UWSM session entry greetd offers is the one we expect users to pick
+        machine.succeed("ls /run/current-system/sw/share/wayland-sessions | grep -q hyprland-uwsm")
+        # compositor + session manager binaries resolve
+        machine.succeed("Hyprland --version")
+        machine.succeed("command -v uwsm")
+        # declarative dotfiles are in place: /etc copies + the home symlink
+        machine.succeed("test -f /etc/hypr/hypridle.conf")
+        machine.succeed("readlink /home/dkopka/.config/hypr/hyprland.conf | grep -qx /etc/hypr/hyprland.conf")
+        # fontconfig resolves the declared mono font
+        machine.succeed("fc-list | grep -qi jetbrains")
+        # pipewire is socket/user-session activated — its presence in the
+        # closure is asserted here; runtime behaviour needs a logged-in seat
+        machine.succeed("command -v wpctl")
+
     with subtest("toolchain on PATH"):
         machine.succeed("rustc --version")
         machine.succeed("cargo --version")
