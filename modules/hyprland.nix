@@ -182,8 +182,9 @@
     }
 
     dwindle {
-        pseudotile = true
-        preserve_split = true
+        # (0.55 config rework removed dwindle:pseudotile — the wiki still
+        # lists it, but the option registry in v0.55.4 does not have it)
+        preserve_split = true    # required for layoutmsg togglesplit below
     }
 
     misc {
@@ -198,7 +199,7 @@
     bind = $mod, Q, killactive,
     bind = $mod, F, fullscreen,
     bind = $mod, V, togglefloating,
-    bind = $mod, T, togglesplit,
+    bind = $mod, T, layoutmsg, togglesplit   # 0.55: togglesplit moved under layoutmsg
     bind = $mod, Escape, exec, loginctl lock-session
     bind = $mod SHIFT, E, exec, uwsm stop     # clean logout, never kill Hyprland
 
