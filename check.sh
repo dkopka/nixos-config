@@ -90,7 +90,11 @@ tier_lint() {
   nix run "${NIXOPTS[@]}" nixpkgs#statix -- check . || fail "statix"
   ok "statix"
   bold "lint: deadnix"
-  nix run "${NIXOPTS[@]}" nixpkgs#deadnix -- --fail . || fail "deadnix"
+  # --no-lambda-pattern-names: module headers keep the conventional
+  # { config, lib, pkgs, ... }: signature even when an arg is unused —
+  # that's NixOS module style, not dead code.
+  nix run "${NIXOPTS[@]}" nixpkgs#deadnix -- --fail --no-lambda-pattern-names . \
+    || fail "deadnix"
   ok "deadnix"
 }
 

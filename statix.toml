@@ -1,0 +1,11 @@
+# statix configuration — picked up automatically by `statix check` (check.sh).
+#
+# W20 repeated_keys is disabled deliberately: this repo uses dotted-path
+# style (boot.initrd.x = ...; boot.loader.y = ...;) because it matches how
+# NixOS options are documented and searched, and because
+# hardware-configuration.nix is GENERATED in exactly that style — restyling
+# it would be overwritten by the next nixos-generate-config run.
+# Everything else statix reports is treated as an error (see check.sh).
+disabled = [
+  "repeated_keys",
+]

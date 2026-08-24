@@ -12,7 +12,7 @@
 
   outputs = { self, nixpkgs, ... }:
     let
-      lib = nixpkgs.lib;
+      inherit (nixpkgs) lib;
 
       # Gitignored files are INVISIBLE to a flake once .git exists, so
       # private/ is only present when the tree is consumed as `path:.`
