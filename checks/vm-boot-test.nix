@@ -60,7 +60,9 @@
     with subtest("declarative user with SSH key, root locked"):
         machine.succeed("id dkopka")
         machine.succeed("grep -q ssh-ed25519 /etc/ssh/authorized_keys.d/dkopka")
-        machine.succeed("passwd -S root | grep -qE 'L|LK'")
+        # users.nix sets root.hashedPassword = "!" (never matches) — assert
+        # the shadow entry directly; `passwd -S` proved unreliable here
+        machine.succeed("grep -q '^root:!:' /etc/shadow")
 
     with subtest("toolchain on PATH"):
         machine.succeed("rustc --version")
