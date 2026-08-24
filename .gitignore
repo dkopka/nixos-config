@@ -7,3 +7,5 @@ private/
 *.key
 ssh_host_*
 result
+
+**/.DS_Store
