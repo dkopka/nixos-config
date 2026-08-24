@@ -1,13 +1,21 @@
 # nixos-config — ThinkPad
 
-Declarative NixOS for the ThinkPad. Design rationale lives in [`../DEPLOYMENT.md`](../DEPLOYMENT.md); the install procedure in [`../INSTALL.md`](../INSTALL.md). This README covers only what you do **with this repo**.
+Declarative NixOS for the ThinkPad. Design rationale lives in [`../DEPLOYMENT.md`](../DEPLOYMENT.md); the install procedure in [`../INSTALL.md`](../INSTALL.md); how to verify changes before deploying in [`TESTING.md`](TESTING.md). This README covers only what you do **with this repo**.
+
+Before every commit: `./check.sh` (syntax + full evaluation, runs on the MacBook). CI builds and boot-tests the x86_64 system on every push.
 
 ## Layout
 
 ```
 flake.nix                   entry point → nixosConfigurations.thinkpad (nixos-26.05)
+                            + thinkpad-ci (test variant) + checks (VM boot test)
+check.sh                    local verification — run before every commit (TESTING.md)
 keys.nix                    public SSH keys (not secrets) — EDIT BEFORE INSTALL
-hosts/thinkpad/default.nix  host assembly, nix GC/hygiene, stateVersion
+hosts/thinkpad/
+  default.nix               real machine = common.nix + private/
+  common.nix                host assembly, nix GC/hygiene, stateVersion (shared with CI)
+checks/                     test framework: fixtures (stub private layer), VM boot test
+.github/workflows/check.yml CI: lint, eval, x86_64 build, QEMU boot test
 modules/
   boot.nix                  systemd-boot, e1000e in initrd, SSH remote unlock :2222
   networking.nix            hostname, NetworkManager, firewall

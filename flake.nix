@@ -1,5 +1,5 @@
 {
-  description = "Declarative NixOS for the ThinkPad (see DEPLOYMENT.md / INSTALL.md)";
+  description = "Declarative NixOS for the ThinkPad (see DEPLOYMENT.md / INSTALL.md / TESTING.md)";
 
   inputs = {
     # NixOS 26.05 "Yarara" — current stable as of Aug 2026
@@ -10,10 +10,48 @@
     # agenix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, ... }: {
-    nixosConfigurations.thinkpad = nixpkgs.lib.nixosSystem {
-      system = "x86_64-linux";
-      modules = [ ./hosts/thinkpad ];
+  outputs = { self, nixpkgs, ... }:
+    let
+      lib = nixpkgs.lib;
+
+      # Gitignored files are INVISIBLE to a flake once .git exists, so
+      # private/ is only present when the tree is consumed as `path:.`
+      # (which check.sh does) or on the ThinkPad's own checkout. Guarding on
+      # it keeps `nix flake check` / CI working on a git-clean clone, where
+      # only thinkpad-ci exists.
+      hasPrivateLayer = builtins.pathExists ./private/hardware-configuration.nix;
+    in
+    {
+      nixosConfigurations = {
+        # Test/CI variant: identical public modules, stub machine identity.
+        # Exists so the config can be evaluated, built, and boot-tested
+        # without the private layer. NEVER deploy this to hardware.
+        thinkpad-ci = lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [
+            ./hosts/thinkpad/common.nix
+            ./checks/fixtures/hardware-configuration.nix
+            ./checks/fixtures/luks.nix
+            ./checks/fixtures/ci-overrides.nix
+          ];
+        };
+      } // lib.optionalAttrs hasPrivateLayer {
+        # The real machine. Only visible when private/ is reachable — use
+        # `--flake path:.#thinkpad` (not `.#thinkpad`) from a git checkout.
+        thinkpad = lib.nixosSystem {
+          system = "x86_64-linux";
+          modules = [ ./hosts/thinkpad ];
+        };
+      };
+
+      checks.x86_64-linux =
+        let pkgs = nixpkgs.legacyPackages.x86_64-linux; in
+        {
+          # Tier 3 — realize every derivation of the CI variant
+          system-builds = self.nixosConfigurations.thinkpad-ci.config.system.build.toplevel;
+
+          # Tier 4 — boot it in QEMU and assert services (checks/vm-boot-test.nix)
+          boot = pkgs.testers.runNixOSTest ./checks/vm-boot-test.nix;
+        };
     };
-  };
 }
