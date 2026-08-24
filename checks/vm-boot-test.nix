@@ -60,9 +60,12 @@
     with subtest("declarative user with SSH key, root locked"):
         machine.succeed("id dkopka")
         machine.succeed("grep -q ssh-ed25519 /etc/ssh/authorized_keys.d/dkopka")
-        # users.nix sets root.hashedPassword = "!" (never matches) — assert
-        # the shadow entry directly; `passwd -S` proved unreliable here
-        machine.succeed("grep -q '^root:!:' /etc/shadow")
+        # users.nix sets root.hashedPassword = "!". Depending on the user
+        # tooling the shadow field materializes as "!", "!*", or "!!" — all
+        # mean locked. Assert the semantic (field starts with ! or *), not
+        # one exact spelling; `passwd -S` proved unreliable here entirely.
+        machine.log("root shadow entry: " + machine.succeed("getent shadow root"))
+        machine.succeed("getent shadow root | awk -F: '{ print $2 }' | grep -qE '^[!*]'")
 
     with subtest("toolchain on PATH"):
         machine.succeed("rustc --version")

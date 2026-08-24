@@ -679,6 +679,11 @@ in
           # module (and incremental_selection with it). plug.lua and
           # treesitter.lua both use configs.setup, so the classic plugin is the
           # one that matches this config. Same grammar API.
+          #
+          # DEADLINE: nixpkgs warns this alias becomes an ERROR in 26.11.
+          # Before upgrading past 26.05: port plug.lua + treesitter.lua to the
+          # new API (highlight via vim.treesitter.start; incremental_selection
+          # needs a replacement, e.g. wildfire.nvim or manual mappings).
           (nvim-treesitter-legacy.withPlugins (p: [ p.rust p.lua p.python p.toml ]))
 
           vim-fugitive
