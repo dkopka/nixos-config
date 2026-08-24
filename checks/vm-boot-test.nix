@@ -15,6 +15,12 @@
 {
   name = "thinkpad-boot";
 
+  # The test framework normally shares ONE read-only nixpkgs across nodes,
+  # which forbids nodes from defining nixpkgs.config — but common.nix sets
+  # allowUnfreePredicate (license-less vim plugins). Let the node instantiate
+  # its own nixpkgs instead of forking common.nix for the VM.
+  node.pkgsReadOnly = false;
+
   nodes.machine = {
     imports = [
       ../hosts/thinkpad/common.nix
