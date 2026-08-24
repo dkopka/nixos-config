@@ -37,6 +37,13 @@
 
     # The test driver drives the VM through a backdoor console, not the
     # network, so NetworkManager managing the virtual NIC is harmless.
+
+    # Cede root to the harness. The framework injects its own
+    # hashedPasswordFile for root (its driver credential), which under
+    # mutableUsers=false outranks and overrides users.nix's
+    # hashedPassword="!" anyway — nulling ours acknowledges that instead
+    # of emitting a multiple-password-options eval warning on every run.
+    users.users.root.hashedPassword = lib.mkForce null;
   };
 
   testScript = ''
