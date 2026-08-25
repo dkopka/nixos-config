@@ -41,11 +41,12 @@ in
       fd
       jq
       tree
+      tmux
       # toolchain grows here, declaratively
     ];
   };
 
-  # Sudo for wheel; require password (flip to true only if you accept the risk)
+  # Sudo for wheel; require password
   security.sudo.wheelNeedsPassword = true;
 
   environment.systemPackages = with pkgs; [
