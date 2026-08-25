@@ -3,9 +3,13 @@
 # `git init`: gitignored files are INVISIBLE to flakes once .git exists.
 private/
 
-# Never commit plaintext secrets or the initrd host key
+# Never commit plaintext secrets or SSH host keys.
+# secrets/*.age is the exception BY DESIGN — those are age ciphertexts and
+# belong in the public repo (see secrets.nix); it's their plaintext that must
+# never land here, which is why agenix edits happen in $EDITOR on tmpfs.
 *.key
 ssh_host_*
+*.plain
 result
 
 **/.DS_Store

@@ -1,5 +1,5 @@
 # User account. All user-facing packages declared here — nothing installed by hand.
-{ config, pkgs, ... }:
+{ config, lib, pkgs, ... }:
 
 let
   keys = import ../keys.nix;
@@ -19,14 +19,20 @@ in
     extraGroups = [ "wheel" "networkmanager" "docker" ];
     openssh.authorizedKeys.keys = [ keys.macbook ];
 
-    # Password hash lives OUTSIDE the repo, machine-local like the initrd
-    # host key. Create it BEFORE the first rebuild with this config:
-    #   sudo mkdir -p /etc/secrets
-    #   nix shell nixpkgs#mkpasswd -c sh -c \
-    #     'mkpasswd -m yescrypt | sudo tee /etc/secrets/dkopka-password >/dev/null'
-    #   sudo chmod 600 /etc/secrets/dkopka-password
-    # (Iteration 2: replace with an agenix secret's .path)
-    hashedPasswordFile = "/etc/secrets/dkopka-password";
+    # Password hash comes from agenix (modules/secrets.nix): the yescrypt
+    # hash is committed to the public repo as secrets/user-password.age and
+    # decrypted to a ramfs path at activation, before this account is built.
+    # Rotating it is a normal commit — `agenix -e secrets/user-password.age`
+    # then rebuild — no machine-local file to remember, nothing to re-create
+    # after a reinstall.
+    #
+    # mkIf, not a bare reference: where the secret is not declared (the CI/VM
+    # fixture, which has no key to decrypt with) this definition must vanish
+    # UNEVALUATED, because config.age.secrets.user-password would not exist.
+    # See the option's description in modules/secrets.nix.
+    hashedPasswordFile =
+      lib.mkIf config.thinkpad.secrets.enable
+        config.age.secrets.user-password.path;
 
     packages = with pkgs; [
       git

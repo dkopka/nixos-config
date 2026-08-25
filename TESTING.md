@@ -39,8 +39,12 @@ GitHub. Tests use a parallel, committed stand-in:
 checks/fixtures/
   hardware-configuration.nix   same shape as the real one, dummy UUIDs
   luks.nix                     dummy LUKS UUID — still exercises the initrd/cryptsetup path
-  ci-overrides.nix             neutralizes the two MACHINE-LOCAL file references
-                               (initrd SSH host key, dkopka's password hash)
+  ci-overrides.nix             neutralizes what depends on MACHINE-LOCAL keys:
+                               the initrd SSH host key, and agenix decryption
+                               (thinkpad.secrets.enable = false — CI has no
+                               host key, so dkopka's password hash cannot be
+                               decrypted; the module itself is still built,
+                               activated and asserted by the VM boot test)
 ```
 
 `flake.nix` assembles these into **`nixosConfigurations.thinkpad-ci`** — the

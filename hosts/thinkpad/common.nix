@@ -10,6 +10,7 @@
     ../../modules/boot.nix
     ../../modules/networking.nix
     ../../modules/ssh.nix
+    ../../modules/secrets.nix
     ../../modules/users.nix
     ../../modules/docker.nix
     ../../modules/services.nix

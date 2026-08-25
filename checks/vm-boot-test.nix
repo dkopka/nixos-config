@@ -94,6 +94,14 @@
         # closure is asserted here; runtime behaviour needs a logged-in seat
         machine.succeed("command -v wpctl")
 
+    with subtest("agenix module is wired in and its CLI is available"):
+        # Decryption itself is NOT exercised here: the VM has no ThinkPad
+        # host key, so ci-overrides.nix sets thinkpad.secrets.enable = false.
+        # What this asserts is that the agenix module imports, activates and
+        # ships its CLI — the half that CAN break from a flake input bump or
+        # an option rename.
+        machine.succeed("command -v agenix")
+
     with subtest("toolchain on PATH"):
         machine.succeed("rustc --version")
         machine.succeed("cargo --version")

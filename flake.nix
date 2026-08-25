@@ -1,16 +1,18 @@
 {
-  description = "Declarative NixOS for the ThinkPad (see DEPLOYMENT.md / INSTALL.md / TESTING.md)";
+  description = "Declarative NixOS for the ThinkPad";
 
   inputs = {
     # NixOS 26.05 "Yarara" — current stable as of Aug 2026
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
-    # Iteration 2 (post first boot): secrets layer per DEPLOYMENT.md
-    # agenix.url = "github:ryantm/agenix";
-    # agenix.inputs.nixpkgs.follows = "nixpkgs";
+    # Runtime secrets layer (modules/secrets.nix). Pinned to the same nixpkgs
+    # so the agenix CLI in environment.systemPackages is built from the very
+    # revision flake.lock pins — no second nixpkgs in the closure.
+    agenix.url = "github:ryantm/agenix";
+    agenix.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = { self, nixpkgs, ... }:
+  outputs = { self, nixpkgs, ... }@inputs:
     let
       inherit (nixpkgs) lib;
 
@@ -20,6 +22,12 @@
       # it keeps `nix flake check` / CI working on a git-clean clone, where
       # only thinkpad-ci exists.
       hasPrivateLayer = builtins.pathExists ./private/hardware-configuration.nix;
+
+      # Every entry point that pulls in hosts/thinkpad/common.nix must pass
+      # this: modules/secrets.nix imports the agenix NixOS module out of
+      # `inputs`, so the flake's inputs have to reach the module system.
+      # Three call sites: thinkpad, thinkpad-ci, and the VM test node below.
+      specialArgs = { inherit inputs; };
     in
     {
       nixosConfigurations = {
@@ -28,6 +36,7 @@
         # without the private layer. NEVER deploy this to hardware.
         thinkpad-ci = lib.nixosSystem {
           system = "x86_64-linux";
+          inherit specialArgs;
           modules = [
             ./hosts/thinkpad/common.nix
             ./checks/fixtures/hardware-configuration.nix
@@ -40,6 +49,7 @@
         # `--flake path:.#thinkpad` (not `.#thinkpad`) from a git checkout.
         thinkpad = lib.nixosSystem {
           system = "x86_64-linux";
+          inherit specialArgs;
           modules = [ ./hosts/thinkpad ];
         };
       };
@@ -51,7 +61,10 @@
           system-builds = self.nixosConfigurations.thinkpad-ci.config.system.build.toplevel;
 
           # Tier 4 — boot it in QEMU and assert services (checks/vm-boot-test.nix)
-          boot = pkgs.testers.runNixOSTest ./checks/vm-boot-test.nix;
+          boot = pkgs.testers.runNixOSTest {
+            imports = [ ./checks/vm-boot-test.nix ];
+            node.specialArgs = specialArgs;
+          };
         };
     };
 }
