@@ -1,14 +1,12 @@
-# Bootloader, initrd networking (e1000e) and remote LUKS unlock over SSH.
-# The LUKS device itself (UUID) lives in private/luks.nix.
 { config, lib, pkgs, ... }:
 
 let
   keys = import ../keys.nix;
 in
 {
-  ############################
+  ########################################################
   # Bootloader — systemd-boot on the unencrypted ESP
-  ############################
+  ########################################################
   boot.loader.systemd-boot.enable = true;
   boot.loader.systemd-boot.configurationLimit = 10;  # keep the 1 GB ESP tidy
   boot.loader.efi.canTouchEfiVariables = true;
@@ -16,12 +14,12 @@ in
   # Hibernation to the encrypted swap LV (safe: swap sits inside the LUKS container)
   boot.resumeDevice = "/dev/nixos/swap";
 
-  ############################
+  ########################################################
   # Early-boot networking — the e1000e requirement
-  ############################
+  ########################################################
   # nixos-generate-config seeds storage modules (nvme, xhci_pci, ...) in
   # private/hardware-configuration.nix; e1000e is OUR addition so the NIC
-  # exists before the disk is unlocked. Verified via `lspci -k` (Phase 6).
+  # exists before the disk is unlocked. Verified via `lspci -k`.
   boot.initrd.availableKernelModules = [ "e1000e" ];
 
   # NixOS 26.05 boots stage 1 with systemd by default, so early networking
@@ -51,9 +49,9 @@ in
     };
   };
 
-  ############################
+  ########################################################
   # Remote LUKS unlock over SSH (systemd stage 1 flavour)
-  ############################
+  ########################################################
   boot.initrd.network = {
     enable = true;
     ssh = {
