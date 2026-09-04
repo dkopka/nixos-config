@@ -16,7 +16,7 @@
     ../../modules/networking.nix
     ../../modules/services.nix
     ../../modules/ssh.nix
-    ../../modules/user.nix
+    ../../modules/users.nix
   ];
 
   networking.hostName = "thinkpad";
