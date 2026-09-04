@@ -1,8 +1,3 @@
-# Host settings + public modules — everything about the ThinkPad that is NOT
-# machine identity. Imported by BOTH:
-#   hosts/thinkpad/default.nix  → the real system (adds private/)
-#   flake.nix thinkpad-ci       → the test variant (adds checks/fixtures/)
-# Keep private-layer imports OUT of this file.
 { config, lib, pkgs, ... }:
 
 {
@@ -17,13 +12,12 @@
     ../../modules/rust.nix
   ];
 
-  # Nix store hygiene — per DEPLOYMENT.md "Ongoing Nix Store Hygiene"
   nix = {
     settings = {
       experimental-features = [ "nix-command" "flakes" ];
-      auto-optimise-store = true;   # hardlink identical store paths
+      auto-optimise-store = true;
       max-jobs = "auto";
-      cores = 0;                    # all cores for builds
+      cores = 0;
     };
     gc = {
       automatic = true;
