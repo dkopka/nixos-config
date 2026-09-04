@@ -1,0 +1,11 @@
+# Private layer — machine identity (disk UUIDs, hardware config).
+# Lives in the private repo / stays local. See README.md before your first
+# `git init`: gitignored files are INVISIBLE to flakes once .git exists.
+private/
+
+# Never commit plaintext secrets or the initrd host key
+*.key
+ssh_host_*
+result
+
+**/.DS_Store
