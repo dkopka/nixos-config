@@ -3,6 +3,7 @@
   imports = [
     ./hardware.nix
     ./disko.nix
+    ./luks.nix
 
     inputs.nixos-hardware.nixosModules.common-cpu-intel  # microcode, KVM, i915
     inputs.nixos-hardware.nixosModules.common-pc-ssd     # fstrim, scheduler
