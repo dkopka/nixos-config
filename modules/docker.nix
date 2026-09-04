@@ -1,5 +1,4 @@
-# Docker — data-root pinned to the dedicated /var LV so images can never
-# fill the root filesystem again (the headline lesson in DEPLOYMENT.md).
+# Docker — data-root pinned to the dedicated /var LV
 { config, pkgs, ... }:
 
 {

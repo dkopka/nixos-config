@@ -8,8 +8,6 @@
     ../../modules/users.nix
     ../../modules/docker.nix
     ../../modules/services.nix
-    ../../modules/neovim.nix
-    ../../modules/rust.nix
   ];
 
   nix = {
@@ -25,17 +23,6 @@
       options = "--delete-older-than 14d";
     };
   };
-
-  # Vim plugins whose upstream repos ship no LICENSE file. The nixpkgs plugin
-  # generator can't detect an SPDX id, so it defaults meta.license = unfree —
-  # this is a metadata gap, not proprietary software (fugitive is Vim-licensed,
-  # nvim-tree is GPL-3). Allowlisted by exact name rather than opening up
-  # allowUnfree globally.
-  nixpkgs.config.allowUnfreePredicate =
-    p: builtins.elem (lib.getName p) [
-      "vimplugin-vim-fugitive"
-      "vimplugin-nvim-tree.lua"
-    ];
 
   time.timeZone = "Europe/Warsaw";
   i18n.defaultLocale = "en_US.UTF-8";

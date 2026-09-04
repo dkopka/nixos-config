@@ -1,4 +1,3 @@
-# User account. All user-facing packages declared here — nothing installed by hand.
 { config, pkgs, ... }:
 
 let
@@ -9,7 +8,7 @@ in
   # rebuild, and imperative `passwd` changes are reverted at activation.
   users.mutableUsers = false;
 
-  # root: locked. No password ("!" never matches), no SSH (ssh.nix),
+  # root: locked. No password ("!" never matches), no SSH (modules/ssh.nix),
   # all administration via sudo from wheel.
   users.users.root.hashedPassword = "!";
 
@@ -25,27 +24,10 @@ in
     #   nix shell nixpkgs#mkpasswd -c sh -c \
     #     'mkpasswd -m yescrypt | sudo tee /etc/secrets/dkopka-password >/dev/null'
     #   sudo chmod 600 /etc/secrets/dkopka-password
-    # (Iteration 2: replace with an agenix secret's .path)
+    # (TODO: replace with an agenix secret's .path)
     hashedPasswordFile = "/etc/secrets/dkopka-password";
-
-    packages = with pkgs; [
-      git
-      htop
-      ripgrep
-      fd
-      jq
-      tree
-      # toolchain grows here, declaratively
-    ];
   };
 
-  # Sudo for wheel; require password (flip to true only if you accept the risk)
+  # Sudo for wheel; require password
   security.sudo.wheelNeedsPassword = true;
-
-  environment.systemPackages = with pkgs; [
-    vim   # rescue editor independent of the neovim module
-    curl
-    pciutils   # lspci — the tool that verified e1000e
-    usbutils
-  ];
 }
