@@ -4,11 +4,8 @@
     ./hardware.nix
     ./disko.nix
 
-    inputs.nixos-hardware.nixosModules.lenovo-thinkpad-p14s-intel-gen2
-    inputs.nixos-hardware.nixosModules.common-cpu-intel
-    inputs.nixos-hardware.nixosModules.common-pc-laptop
-    inputs.nixos-hardware.nixosModules.common-pc-ssd
-    inputs.nixos-hardware.nixosModules.common-gpu-nvidia-disable
+    inputs.nixos-hardware.nixosModules.common-cpu-intel  # microcode, KVM, i915
+    inputs.nixos-hardware.nixosModules.common-pc-ssd     # fstrim, scheduler
 
     ../../modules/boot.nix
     ../../modules/core.nix

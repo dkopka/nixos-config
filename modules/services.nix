@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ lib, ... }:
 
 {
   # Time sync
@@ -12,4 +12,6 @@
   };
 
   services.fstrim.enable = true;  # weekly TRIM for the SSD (pairs with allowDiscards)
+  services.tlp.enable = lib.mkForce false;
+  services.thermald.enable = true;
 }
