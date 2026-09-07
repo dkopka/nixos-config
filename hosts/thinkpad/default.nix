@@ -11,6 +11,7 @@
     ../../modules/boot.nix
     ../../modules/core.nix
     ../../modules/docker.nix
+    ../../modules/home-manager.nix
     ../../modules/networking.nix
     ../../modules/services.nix
     ../../modules/ssh.nix
